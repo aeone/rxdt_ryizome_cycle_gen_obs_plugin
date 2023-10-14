@@ -1,11 +1,10 @@
 {
-	"id": "sample-plugin",
-	"name": "Sample Plugin",
+	"id": "com.ryielle.rxdt.ryizome-cycle-gen",
+	"name": "Ryizome Cycle Gen",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "This is a sample plugin for Obsidian. This plugin demonstrates some of the capabilities of the Obsidian API.",
-	"author": "Obsidian",
-	"authorUrl": "https://obsidian.md",
-	"fundingUrl": "https://obsidian.md/pricing",
+	"description": "This plug-in helps quickly generate cycles and threads for the arcsystem",
+	"author": "Ryielle",
+	"authorUrl": "https://ryielle.com",
 	"isDesktopOnly": false
 }
