@@ -86,7 +86,7 @@ function createNewCycle(vault: Vault, cycleName: string, thread: ['new', string]
 			advancingThreadName = thread[2];
 		}
 		templateContent = templateContent.replace('created: {{date}}', `created: ${created}`);
-		templateContent = templateContent.replace('advancing: []', `advancing: [[${advancingThreadFilename}|(${advancingThreadFilename}) ${advancingThreadName}]]`);
+		templateContent = templateContent.replace('advancing: []', `advancing: \n  - "[[${advancingThreadFilename}|(${advancingThreadFilename}) ${advancingThreadName}]]"`);
 		// Create the new markdown file with the template content
 		vault.create(`as/c/${fileName}`, templateContent).then((newFile) => {
 			this.app.workspace.activeLeaf.openFile(newFile);
