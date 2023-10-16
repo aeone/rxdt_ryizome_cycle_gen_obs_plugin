@@ -51,7 +51,7 @@ export default class RyizomeCycleGen extends Plugin {
             id: 'start-new-ryizome-thread',
             name: 'Start new Ryizome Thread',
             callback: () => {
-                new CreateRyizomeThreadModal(this.app, () => {}).open();
+                new CreateRyizomeThreadModal(this.app, '', () => {}).open();
             }
         });
 	}
@@ -100,7 +100,7 @@ function createNewCycle(vault: Vault, app: App, cycleName: string, thread: ['new
 		let advancingThreadName;
 		if (thread[0] === 'new') {
 			// need to create a new thread
-			new CreateRyizomeThreadModal(app, finishCreatingCycle).open();
+			new CreateRyizomeThreadModal(app, thread[1], finishCreatingCycle).open();
 		} else {
 			// use existing thread
 			advancingThreadFilename = thread[1];
@@ -222,11 +222,13 @@ class CreateRyizomeCycleModal extends Modal {
     }
 }
 class CreateRyizomeThreadModal extends Modal {
+	existingObjective: string;
 	wrapUp: (threadFilename: string, threadName: string)=>void;
 	threadFilename: string;
 	threadName: string;
-    constructor(app: App, wrapUp: (threadFilename: string, threadName: string)=>void) {
+    constructor(app: App, existingObjective: string, wrapUp: (threadFilename: string, threadName: string)=>void) {
         super(app);
+		this.existingObjective = existingObjective;
 		this.wrapUp = wrapUp || (() => {});
     }
 
@@ -234,7 +236,7 @@ class CreateRyizomeThreadModal extends Modal {
         const { contentEl } = this;
         // Create input elements for cycle name and thread
 		contentEl.createEl("h1", { text: `Create new thread` });
-        const cycleNameInput = contentEl.createEl('input', { placeholder: 'Thread Objective' });
+        const cycleNameInput = contentEl.createEl('input', { placeholder: 'Thread Objective', value: this.existingObjective });
 		contentEl.createEl("hr");
         // const arcfileInput = contentEl.createEl('input', { placeholder: 'Advancing New Arcfile' });
 		const arcfileDisplay = contentEl.createEl('p', { text: '(arcfile to advance)' });
