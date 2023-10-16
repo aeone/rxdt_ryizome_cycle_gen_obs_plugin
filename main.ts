@@ -85,9 +85,12 @@ function createNewCycle(vault: Vault, cycleName: string, thread: ['new', string]
 			advancingThreadFilename = thread[1];
 			advancingThreadName = thread[2];
 		}
-		templateContent = templateContent.replace('created: {{date}}', `created: ${created}`);
-		templateContent = templateContent.replace('advancing: []', `advancing: \n  - "[[${advancingThreadFilename}|(${advancingThreadFilename}) ${advancingThreadName}]]"`);
-		templateContent = templateContent + `\n\n---\n# Thread context\n![[${advancingThreadFilename}]]`
+		templateContent = templateContent.replace(/{{created-date}}/g, created);
+		templateContent = templateContent.replace(/{{thread-filename}}/g, advancingThreadFilename || '(unknown thread filename)');
+		templateContent = templateContent.replace(/{{thread-name}}/g, advancingThreadName || '(unknown thread name)');
+		// templateContent = templateContent.replace('created: {{date}}', `created: ${created}`);
+		// templateContent = templateContent.replace('advancing: []', `advancing: \n  - "[[${advancingThreadFilename}|(${advancingThreadFilename}) ${advancingThreadName}]]"`);
+		// templateContent = templateContent + `\n\n---\n# Thread context\n![[${advancingThreadFilename}]]`
 		// Create the new markdown file with the template content
 		vault.create(`as/c/${fileName}`, templateContent).then((newFile) => {
 			this.app.workspace.activeLeaf.openFile(newFile);
@@ -99,7 +102,71 @@ function createNewCycle(vault: Vault, cycleName: string, thread: ['new', string]
 	// possibly by using the vault API to read and update thread files in the as/t/ directory.
 }
 
-// function createNewThread
+function createNewThread(vault: Vault, app: App, threadName: string, arcfileFilename: string|false, wrapUp: ()=>void) {
+	const deviceName = (app as any).internalPlugins.plugins.sync.instance.deviceName;
+    
+    const yearChar = (parseInt(moment().format('YYYY')) - 2020).toString(36).toUpperCase();
+    const monthChar = (parseInt(moment().format('MM'))).toString(36).toUpperCase();
+    const dayChars = moment().format('DD');
+    const deviceChar = deviceName[0].toUpperCase();
+
+    // Function to generate filename based on file count
+    const generateFileName = (fileCount: number) => {
+        return `${yearChar}${monthChar}${dayChars}${fileCount.toString()}${deviceChar}.md`;
+    }
+
+    // Function to check if a file with the given name already exists in the as/t/ directory
+    const fileExists = (fileName: string) => {
+        return vault.getMarkdownFiles().some(file => file.path === `as/t/${fileName}`);
+    }
+
+    // Determine the correct file count to ensure uniqueness of filename
+    let fileCount = 1;
+    while (fileExists(generateFileName(fileCount))) {
+        fileCount++;
+    }
+
+    // Now fileCount has the correct value to ensure filename uniqueness
+    const fileName = generateFileName(fileCount);
+	// const deviceName = (app as any).internalPlugins.plugins.sync.instance.deviceName;
+	// // 1. Calculate the first character representing the current year less 2020
+    // const yearChar = (parseInt(moment().format('YYYY')) - 2020).toString(36).toUpperCase();
+    // // 2. Calculate the second character representing the current month
+    // const monthChar = (parseInt(moment().format('MM'))).toString(36).toUpperCase();
+    // // 3. Calculate the third and fourth characters representing the current day of the month
+    // const dayChars = moment().format('DD');
+    // // 4. Calculate the fifth character representing the number of files created on this machine today plus 1
+    // const todayFiles = vault.getMarkdownFiles().filter(file => moment(file.stat.mtime).isSame(moment(), 'day')).length;
+    // const fileCountChar = (todayFiles + 1).toString();
+    // // 5. Obtain the sixth character representing the first letter of the current device name
+    // const deviceChar = deviceName[0].toUpperCase();
+    // // Construct the filename
+    // const fileName = `${yearChar}${monthChar}${dayChars}${fileCountChar}${deviceChar}.md`;
+	// // const currentDay = moment().format('YYYYMMDDHHmm');
+	// // const fileName = `${currentDay}${deviceName[0]}.md`;
+
+	// Get the content of the template file
+	const templatePath = 'vault/templates/thread template.md';
+	const files = vault.getMarkdownFiles();
+	const template = files.filter(file => file.path === templatePath)[0];
+	if (!template) {
+		new Notice(`RXDT: Could not find template file at ${templatePath}`);
+		return;
+	}
+	vault.cachedRead(template).then(templateContent => {
+		// Interpolate into template content: 
+		// - created (with current date)
+		const created = moment().format('YYYY-MM-DD');
+		templateContent = templateContent.replace(/{{created-date}}/g, created);
+		templateContent = templateContent.replace(/{{thread-name}}/g, threadName);
+		templateContent = templateContent.replace(/{{arcfile-filename}}/g, arcfileFilename || '(no arcfile assigned)');
+		// Create the new markdown file with the template content
+		vault.create(`as/t/${fileName}`, templateContent).then((newFile) => {
+			this.app.workspace.activeLeaf.openFile(newFile);
+			wrapUp();
+		});
+	});
+}
 
 class RyizomeCycleModal extends Modal {
     constructor(app: App) {
