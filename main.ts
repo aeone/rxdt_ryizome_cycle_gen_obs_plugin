@@ -87,6 +87,7 @@ function createNewCycle(vault: Vault, cycleName: string, thread: ['new', string]
 		}
 		templateContent = templateContent.replace('created: {{date}}', `created: ${created}`);
 		templateContent = templateContent.replace('advancing: []', `advancing: \n  - "[[${advancingThreadFilename}|(${advancingThreadFilename}) ${advancingThreadName}]]"`);
+		templateContent = templateContent + `\n\n---\n# Thread context\n![[${advancingThreadFilename}]]`
 		// Create the new markdown file with the template content
 		vault.create(`as/c/${fileName}`, templateContent).then((newFile) => {
 			this.app.workspace.activeLeaf.openFile(newFile);
@@ -109,11 +110,20 @@ class RyizomeCycleModal extends Modal {
         const { contentEl } = this;
 
         // Create input elements for cycle name and thread
+		contentEl.createEl("h1", { text: `Create new cycle` });
         const cycleNameInput = contentEl.createEl('input', { placeholder: 'Cycle Name' });
+		contentEl.createEl("hr");
         const threadInput = contentEl.createEl('input', { placeholder: 'Advancing New Thread' });
+		const threadDisplay = contentEl.createEl('p', { text: '(thread to advance)' });
 		const threadSelectButton = contentEl.createEl('button', { text: 'Or Select Existing Thread' });
+		contentEl.createEl("hr");
 		let existingThreadFilename = '';
 		let existingThreadObjective = '';
+		threadInput.addEventListener('input', () => {
+			existingThreadFilename = '';
+			existingThreadObjective = '';
+			threadDisplay.innerText = `New thread with objective: ${threadInput.value}`
+		});
 		threadSelectButton.addEventListener('click', () => {
 			const existingThreads = this.app.vault.getFiles().filter(file => file.path.startsWith('as/t/'));
 			const modal = new SelectThreadModal(this.app, existingThreads);
@@ -126,6 +136,7 @@ class RyizomeCycleModal extends Modal {
 				} else {
 					existingThreadObjective = '(no frontmatter/objective)';
 				}
+				threadDisplay.innerText = `Existing thread (${existingThreadFilename}): ${existingThreadObjective}`
 			}
 			modal.open();
 		});
